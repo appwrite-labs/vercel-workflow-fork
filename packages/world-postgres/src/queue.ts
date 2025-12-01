@@ -12,11 +12,15 @@ import { createEmbeddedWorld } from '@workflow/world-local';
 import {
   run,
   makeWorkerUtils,
+  Logger,
   type Runner,
   type WorkerUtils,
   type Task,
   type WorkerEvents,
 } from 'graphile-worker';
+
+// Silent logger to suppress graphile-worker's default INFO logs
+const silentLogger = new Logger(() => () => {});
 import { monotonicFactory } from 'ulid';
 import { MessageData } from './message.js';
 import type { PostgresWorldConfig } from './config.js';
@@ -60,7 +64,10 @@ export function createQueue(
 
   async function getWorkerUtils(): Promise<WorkerUtils> {
     if (!workerUtils) {
-      workerUtils = await makeWorkerUtils({ connectionString });
+      workerUtils = await makeWorkerUtils({
+        connectionString,
+        logger: silentLogger,
+      });
     }
     return workerUtils;
   }
@@ -153,6 +160,7 @@ export function createQueue(
         concurrency: config.queueConcurrency || 10,
         taskList,
         events,
+        logger: silentLogger,
         // Performance tuning for remote/serverless Postgres (Neon, Supabase, etc.)
         // where LISTEN/NOTIFY may have high latency or not work through poolers
         pollInterval: config.pollInterval ?? 1000,
