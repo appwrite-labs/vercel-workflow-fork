@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import * as Stream from 'node:stream';
 import { JsonTransport } from '@vercel/queue';
 import {
@@ -14,7 +15,7 @@ import {
   type Runner,
   type WorkerUtils,
   type Task,
-  Logger,
+  type WorkerEvents,
 } from 'graphile-worker';
 import { monotonicFactory } from 'ulid';
 import { MessageData } from './message.js';
@@ -111,7 +112,36 @@ export function createQueue(
     [TaskIdentifiers['__wkf_step_']]: createTaskHandler('__wkf_step_'),
   };
 
-  const logger = new Logger(() => () => {});
+  // Create events emitter for debugging LISTEN/NOTIFY status
+  const events: WorkerEvents = new EventEmitter() as WorkerEvents;
+  const debug = config.debug ?? false;
+  let notificationLogged = false;
+
+  if (debug) {
+    events.on('pool:listen:connecting', ({ attempts }) => {
+      console.log(
+        `[workflow-postgres] LISTEN connecting (attempt ${attempts})...`
+      );
+    });
+    events.on('pool:listen:success', () => {
+      console.log('[workflow-postgres] ✓ LISTEN/NOTIFY connected successfully');
+    });
+    events.on('pool:listen:error', ({ error }) => {
+      console.error('[workflow-postgres] ✗ LISTEN/NOTIFY error:', error);
+    });
+    events.on('pool:listen:release', () => {
+      console.log('[workflow-postgres] LISTEN connection released');
+    });
+    events.on('pool:listen:notification', () => {
+      // Log sparingly - only first notification to confirm it's working
+      if (!notificationLogged) {
+        console.log(
+          '[workflow-postgres] ✓ Received first NOTIFY - real-time notifications working'
+        );
+        notificationLogged = true;
+      }
+    });
+  }
 
   return {
     createQueueHandler,
@@ -122,7 +152,11 @@ export function createQueue(
         connectionString,
         concurrency: config.queueConcurrency || 10,
         taskList,
-        logger,
+        events,
+        // Performance tuning for remote/serverless Postgres (Neon, Supabase, etc.)
+        // where LISTEN/NOTIFY may have high latency or not work through poolers
+        pollInterval: config.pollInterval ?? 1000,
+        useNodeTime: config.useNodeTime ?? false,
       });
     },
     async stop() {

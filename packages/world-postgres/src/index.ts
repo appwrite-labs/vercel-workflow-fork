@@ -29,6 +29,12 @@ export function createWorld(
     queueConcurrency:
       parseInt(process.env.WORKFLOW_POSTGRES_WORKER_CONCURRENCY || '10', 10) ||
       10,
+    // Performance tuning for serverless Postgres (Neon, Supabase, etc.)
+    pollInterval: process.env.WORKFLOW_POSTGRES_POLL_INTERVAL
+      ? parseInt(process.env.WORKFLOW_POSTGRES_POLL_INTERVAL, 10)
+      : undefined,
+    useNodeTime: process.env.WORKFLOW_POSTGRES_USE_NODE_TIME === 'true',
+    debug: process.env.WORKFLOW_POSTGRES_DEBUG === 'true',
   }
 ): World & { start(): Promise<void>; stop(): Promise<void> } {
   const postgres = createPostgres(config.connectionString);
