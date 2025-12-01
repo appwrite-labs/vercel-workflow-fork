@@ -19,7 +19,7 @@ export interface PostgresWorldConfig {
   useNodeTime?: boolean;
   /**
    * Enable debug logging for queue operations.
-   * Shows LISTEN/NOTIFY connection status and notifications.
+   * Shows LISTEN/NOTIFY connection status and notifications
    * Default: false
    */
   debug?: boolean;
