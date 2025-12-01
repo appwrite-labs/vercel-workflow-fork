@@ -14,6 +14,7 @@ import {
   type Runner,
   type WorkerUtils,
   type Task,
+  Logger,
 } from 'graphile-worker';
 import { monotonicFactory } from 'ulid';
 import { MessageData } from './message.js';
@@ -110,6 +111,8 @@ export function createQueue(
     [TaskIdentifiers['__wkf_step_']]: createTaskHandler('__wkf_step_'),
   };
 
+  const logger = new Logger(() => () => {});
+
   return {
     createQueueHandler,
     getDeploymentId,
@@ -119,6 +122,7 @@ export function createQueue(
         connectionString,
         concurrency: config.queueConcurrency || 10,
         taskList,
+        logger,
       });
     },
     async stop() {
