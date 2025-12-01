@@ -1,5 +1,4 @@
 import type { Storage, World } from '@workflow/world';
-import PgBoss from 'pg-boss';
 import createPostgres from 'postgres';
 import type { PostgresWorldConfig } from './config.js';
 import { createClient, type Drizzle } from './drizzle/index.js';
@@ -30,14 +29,17 @@ export function createWorld(
     queueConcurrency:
       parseInt(process.env.WORKFLOW_POSTGRES_WORKER_CONCURRENCY || '10', 10) ||
       10,
+    // Performance tuning for serverless Postgres (Neon, Supabase, etc.)
+    pollInterval: process.env.WORKFLOW_POSTGRES_POLL_INTERVAL
+      ? parseInt(process.env.WORKFLOW_POSTGRES_POLL_INTERVAL, 10)
+      : undefined,
+    useNodeTime: process.env.WORKFLOW_POSTGRES_USE_NODE_TIME === 'true',
+    debug: process.env.WORKFLOW_POSTGRES_DEBUG === 'true',
   }
-): World & { start(): Promise<void> } {
-  const boss = new PgBoss({
-    connectionString: config.connectionString,
-  });
+): World & { start(): Promise<void>; stop(): Promise<void> } {
   const postgres = createPostgres(config.connectionString);
   const drizzle = createClient(postgres);
-  const queue = createQueue(boss, config);
+  const queue = createQueue(config.connectionString, config);
   const storage = createStorage(drizzle);
   const streamer = createStreamer(postgres, drizzle);
 
@@ -47,6 +49,9 @@ export function createWorld(
     ...queue,
     async start() {
       await queue.start();
+    },
+    async stop() {
+      await queue.stop();
     },
   };
 }
