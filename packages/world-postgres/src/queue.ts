@@ -87,6 +87,7 @@ export function createQueue(
         attempt: 1,
         messageId,
         idempotencyKey: opts?.idempotencyKey,
+        context: opts?.context,
       }),
       {
         jobKey: opts?.idempotencyKey ?? messageId,
@@ -110,6 +111,7 @@ export function createQueue(
       const queueName = `${queuePrefix}${messageData.id}` as const;
       await embeddedWorld.queue(queueName, message, {
         idempotencyKey: messageData.idempotencyKey,
+        context: messageData.context,
       });
     };
   }

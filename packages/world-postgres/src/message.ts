@@ -17,5 +17,6 @@ export const MessageData = z.object({
       "The ID of the sub-queue. For workflows, it's the workflow name. For steps, it's the step name."
     ),
   data: Base64Buffer.describe('The message that was sent'),
+  context: z.record(z.string(), z.string()).optional(),
 });
 export type MessageData = z.infer<typeof MessageData>;

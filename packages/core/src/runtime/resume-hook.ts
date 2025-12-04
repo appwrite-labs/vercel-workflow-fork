@@ -121,6 +121,7 @@ export async function resumeHook<T = any>(
             // attach the trace carrier from the workflow run
             traceCarrier:
               workflowRun.executionContext?.traceCarrier ?? undefined,
+            context: undefined,
           } satisfies WorkflowInvokePayload,
           {
             deploymentId: workflowRun.deploymentId,

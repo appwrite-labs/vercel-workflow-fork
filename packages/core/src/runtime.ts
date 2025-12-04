@@ -885,6 +885,7 @@ export const stepEntrypoint =
           await world.queue(`__wkf_workflow_${workflowName}`, {
             runId: workflowRunId,
             traceCarrier: await serializeTraceCarrier(),
+            context: undefined,
           } satisfies WorkflowInvokePayload);
         });
       });

@@ -18,6 +18,7 @@ export interface StartOptions {
    * Only set this if you are doing something advanced and know what you are doing.
    */
   deploymentId?: string;
+  context?: Record<string, any>;
 }
 
 /**
@@ -128,6 +129,7 @@ export async function start<TArgs extends unknown[], TResult>(
         {
           runId: runResponse.runId,
           traceCarrier,
+          context: opts.context,
         } satisfies WorkflowInvokePayload,
         {
           deploymentId,
