@@ -271,8 +271,11 @@ export function workflowEntrypoint(workflowCode: string) {
   return getWorldHandlers().createQueueHandler(
     '__wkf_workflow_',
     async (message_, metadata) => {
-      const { runId, traceCarrier: traceContext } =
-        WorkflowInvokePayloadSchema.parse(message_);
+      const {
+        runId,
+        traceCarrier: traceContext,
+        context,
+      } = WorkflowInvokePayloadSchema.parse(message_);
       // Extract the workflow name from the topic name
       const workflowName = metadata.queueName.slice('__wkf_workflow_'.length);
 
@@ -422,6 +425,7 @@ export function workflowEntrypoint(workflowCode: string) {
                         workflowStartedAt,
                         stepId: step.stepId,
                         traceCarrier: await serializeTraceCarrier(),
+                        context,
                       } satisfies StepInvokePayload,
                       {
                         idempotencyKey: queueItem.correlationId,
@@ -582,6 +586,7 @@ export const stepEntrypoint =
         workflowStartedAt,
         stepId,
         traceCarrier: traceContext,
+        context,
       } = StepInvokePayloadSchema.parse(message_);
       // Execute step within the propagated trace context
       return await withTraceContext(traceContext, async () => {
@@ -885,7 +890,7 @@ export const stepEntrypoint =
           await world.queue(`__wkf_workflow_${workflowName}`, {
             runId: workflowRunId,
             traceCarrier: await serializeTraceCarrier(),
-            context: undefined,
+            context,
           } satisfies WorkflowInvokePayload);
         });
       });
