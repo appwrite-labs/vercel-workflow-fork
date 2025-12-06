@@ -2595,6 +2595,7 @@ impl StepTransform {
             used_identifiers: &mut used_identifiers,
             step_function_names: &self.step_function_names,
             current_function: None,
+            mode: self.mode.clone(),
         };
 
         // Visit the module directly (not clones) to analyze the already-transformed code
@@ -2780,6 +2781,7 @@ struct ComprehensiveUsageCollector<'a> {
     used_identifiers: &'a mut HashSet<String>,
     step_function_names: &'a HashSet<String>,
     current_function: Option<String>,
+    mode: TransformMode,
 }
 
 impl<'a> VisitMut for ComprehensiveUsageCollector<'a> {
@@ -2808,8 +2810,9 @@ impl<'a> VisitMut for ComprehensiveUsageCollector<'a> {
         let fn_name = fn_decl.ident.sym.to_string();
         let is_step_function = self.step_function_names.contains(&fn_name);
 
-        if is_step_function {
-            // Step functions have their bodies replaced, so don't analyze their original content
+        // Only skip step function bodies in modes where they're actually replaced.
+        // In Client mode, bodies are kept, so we need to analyze their usage.
+        if is_step_function && self.mode != TransformMode::Client {
             return;
         }
 
@@ -2861,8 +2864,8 @@ impl<'a> VisitMut for ComprehensiveUsageCollector<'a> {
         match &mut export_decl.decl {
             Decl::Fn(fn_decl) => {
                 let fn_name = fn_decl.ident.sym.to_string();
-                if self.step_function_names.contains(&fn_name) {
-                    // Step functions have their bodies replaced
+                // Only skip in modes where step function bodies are replaced
+                if self.step_function_names.contains(&fn_name) && self.mode != TransformMode::Client {
                     return;
                 }
 
@@ -2892,8 +2895,8 @@ impl<'a> VisitMut for ComprehensiveUsageCollector<'a> {
                     _ => false,
                 };
 
-                if is_step_fn {
-                    // Don't visit the initializer if it's a step function
+                // Only skip in modes where step function bodies are replaced
+                if is_step_fn && self.mode != TransformMode::Client {
                     return;
                 }
             }
