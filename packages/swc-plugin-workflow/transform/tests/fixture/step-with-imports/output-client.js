@@ -1,9 +1,9 @@
-import { someHelper } from './helpers';
-import { anotherHelper, usefulHelper } from './utils';
-import defaultExport from './default';
-import * as something from './something';
-import * as useful from './useful';
-import 'dotenv/config';
+import { someHelper } from './helpers'; // removed in step/workflow mode, kept in client mode
+import { anotherHelper, usefulHelper// always kept
+ } from './utils';
+import defaultExport from './default'; // removed in step/workflow mode, kept in client mode
+import * as something from './something'; // removed in step/workflow mode, kept in client mode
+import * as useful from './useful'; // always kept
 /**__internal_workflows{"steps":{"input.js":{"processData":{"stepId":"step//input.js//processData"}}}}*/;
 export async function processData(data) {
     const result = someHelper(data);
