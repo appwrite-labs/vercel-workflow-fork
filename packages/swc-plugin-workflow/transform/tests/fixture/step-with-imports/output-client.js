@@ -1,12 +1,21 @@
-import { usefulHelper// do not remove
- } from './utils';
-import * as useful from './useful'; // do not remove
+import { someHelper } from './helpers';
+import { anotherHelper, usefulHelper } from './utils';
+import defaultExport from './default';
+import * as something from './something';
+import * as useful from './useful';
+import 'dotenv/config';
 /**__internal_workflows{"steps":{"input.js":{"processData":{"stepId":"step//input.js//processData"}}}}*/;
 export async function processData(data) {
     const result = someHelper(data);
     const transformed = anotherHelper(result);
     localFunction();
     return defaultExport(transformed);
+}
+function localFunction() {
+    // only used by the step, so it should be removed
+    // when the step body gets removed since it is not used
+    // anywhere anymore
+    something.doSomething();
 }
 export function normalFunction() {
     // since this function is exported we can't remove it
